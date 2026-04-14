@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 type PaymentMethod = "cod" | "bank" | "jazzcash" | "easypaisa";
 
