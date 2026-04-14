@@ -27,12 +27,44 @@ const Checkout = () => {
     );
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.phone || !form.address || !form.city) {
       toast.error("Please fill in all fields");
       return;
     }
+
+    const orderItems = items.map((i) => ({
+      productId: i.product.id,
+      title: i.product.title,
+      price: i.product.price,
+      quantity: i.quantity,
+      size: i.size,
+      color: i.color,
+    }));
+
+    const { error } = await supabase.from("orders").insert({
+      customer_name: form.name,
+      phone: form.phone,
+      address: form.address,
+      city: form.city,
+      payment_method: payment,
+      total: subtotal + shipping,
+      items: orderItems,
+    });
+
+    if (error) {
+      toast.error("Failed to place order. Please try again.");
+      return;
+    }
+
+    // Also save/update customer record
+    await supabase.from("customers").insert({
+      name: form.name,
+      phone: form.phone,
+      city: form.city,
+    });
+
     toast.success("Order placed successfully! 🎉");
     clearCart();
   };
