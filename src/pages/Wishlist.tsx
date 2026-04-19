@@ -1,12 +1,21 @@
 import { Link } from "react-router-dom";
-import { Heart, X } from "lucide-react";
+import { Heart } from "lucide-react";
 import { useWishlist } from "@/context/WishlistContext";
-import { products } from "@/data/products";
+import { useProducts } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
 
 const Wishlist = () => {
-  const { items, toggleWishlist } = useWishlist();
+  const { items } = useWishlist();
+  const { data: products = [], isLoading } = useProducts();
   const wishlistProducts = products.filter(p => items.includes(p.id));
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-20 text-center">
+        <p className="font-body text-muted-foreground">Loading…</p>
+      </div>
+    );
+  }
 
   if (wishlistProducts.length === 0) {
     return (

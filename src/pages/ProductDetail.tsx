@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Minus, Plus, Heart, Star, ShoppingBag, ArrowLeft } from "lucide-react";
-import { products } from "@/data/products";
+import { useProduct, useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import ProductCard from "@/components/ProductCard";
@@ -9,7 +9,8 @@ import { toast } from "sonner";
 
 const ProductDetail = () => {
   const { id } = useParams();
-  const product = products.find(p => p.id === id);
+  const { data: product, isLoading } = useProduct(id);
+  const { data: allProducts = [] } = useProducts();
   const { addItem } = useCart();
   const { toggleWishlist, isWishlisted } = useWishlist();
 
@@ -17,6 +18,14 @@ const ProductDetail = () => {
   const [selectedColor, setSelectedColor] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-20 text-center">
+        <p className="font-body text-muted-foreground">Loading product…</p>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -28,7 +37,7 @@ const ProductDetail = () => {
   }
 
   const wishlisted = isWishlisted(product.id);
-  const related = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
+  const related = allProducts.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
 
   const handleAddToCart = () => {
     if (!selectedSize) { toast.error("Please select a size"); return; }
