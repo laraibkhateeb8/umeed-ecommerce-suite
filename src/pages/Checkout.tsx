@@ -1,7 +1,16 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
+
+const checkoutSchema = z.object({
+  name: z.string().trim().min(2, "Name is required").max(100),
+  phone: z.string().trim().min(7, "Valid phone required").max(20),
+  address: z.string().trim().min(5, "Address is required").max(500),
+  city: z.string().trim().min(2, "City is required").max(100),
+});
 
 type PaymentMethod = "cod" | "bank" | "jazzcash" | "easypaisa";
 
@@ -13,9 +22,11 @@ const paymentMethods: { id: PaymentMethod; label: string; desc: string }[] = [
 ];
 
 const Checkout = () => {
+  const navigate = useNavigate();
   const { items, subtotal, clearCart } = useCart();
   const [payment, setPayment] = useState<PaymentMethod>("cod");
   const [form, setForm] = useState({ name: "", phone: "", address: "", city: "" });
+  const [submitting, setSubmitting] = useState(false);
   const shipping = subtotal >= 5000 ? 0 : 300;
 
   if (items.length === 0) {
@@ -29,10 +40,12 @@ const Checkout = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.phone || !form.address || !form.city) {
-      toast.error("Please fill in all fields");
+    const result = checkoutSchema.safeParse(form);
+    if (!result.success) {
+      toast.error(result.error.issues[0].message);
       return;
     }
+    setSubmitting(true);
 
     const orderItems = items.map((i) => ({
       productId: i.product.id,
@@ -43,30 +56,39 @@ const Checkout = () => {
       color: i.color,
     }));
 
-    const { error } = await supabase.from("orders").insert({
-      customer_name: form.name,
-      phone: form.phone,
-      address: form.address,
-      city: form.city,
-      payment_method: payment,
-      total: subtotal + shipping,
-      items: orderItems,
-    });
+    const total = subtotal + shipping;
 
-    if (error) {
+    const { data: order, error } = await supabase
+      .from("orders")
+      .insert({
+        customer_name: result.data.name,
+        phone: result.data.phone,
+        address: result.data.address,
+        city: result.data.city,
+        payment_method: payment,
+        total,
+        items: orderItems,
+      })
+      .select("id")
+      .single();
+
+    if (error || !order) {
       toast.error("Failed to place order. Please try again.");
+      setSubmitting(false);
       return;
     }
 
-    // Also save/update customer record
-    await supabase.from("customers").insert({
-      name: form.name,
-      phone: form.phone,
-      city: form.city,
+    // Upsert customer (dedupes by phone, increments totals)
+    await supabase.rpc("upsert_customer_on_order", {
+      _name: result.data.name,
+      _phone: result.data.phone,
+      _city: result.data.city,
+      _order_total: total,
     });
 
     toast.success("Order placed successfully! 🎉");
     clearCart();
+    navigate(`/order-confirmation?id=${order.id}&total=${total}&name=${encodeURIComponent(result.data.name)}`);
   };
 
   return (
