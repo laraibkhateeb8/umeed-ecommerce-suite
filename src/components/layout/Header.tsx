@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, ShoppingBag, Heart, Menu, X } from "lucide-react";
+import { Search, ShoppingBag, Heart, Menu, X, LayoutDashboard } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { categories } from "@/data/products";
@@ -52,6 +52,9 @@ const Header = () => {
 
           {/* Icons */}
           <div className="flex items-center gap-3">
+            <Link to="/admin" className="p-2 hover:text-accent transition-colors" aria-label="Admin">
+              <LayoutDashboard className="w-5 h-5" />
+            </Link>
             <button onClick={() => setSearchOpen(!searchOpen)} aria-label="Search" className="p-2 hover:text-accent transition-colors">
               <Search className="w-5 h-5" />
             </button>
