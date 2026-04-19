@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, ShoppingBag, Heart, Menu, X, LayoutDashboard } from "lucide-react";
+import { Search, ShoppingBag, Heart, Menu, X, LayoutDashboard, LogIn, LogOut } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
+import { useAuth } from "@/hooks/useAuth";
 import { categories } from "@/data/products";
 
 const Header = () => {
   const { totalItems } = useCart();
   const { items: wishlistItems } = useWishlist();
+  const { session, isAdmin, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -52,9 +54,20 @@ const Header = () => {
 
           {/* Icons */}
           <div className="flex items-center gap-3">
-            <Link to="/admin" className="p-2 hover:text-accent transition-colors" aria-label="Admin">
-              <LayoutDashboard className="w-5 h-5" />
-            </Link>
+            {isAdmin && (
+              <Link to="/admin" className="p-2 hover:text-accent transition-colors" aria-label="Admin">
+                <LayoutDashboard className="w-5 h-5" />
+              </Link>
+            )}
+            {session ? (
+              <button onClick={signOut} className="p-2 hover:text-accent transition-colors" aria-label="Sign out">
+                <LogOut className="w-5 h-5" />
+              </button>
+            ) : (
+              <Link to="/auth" className="p-2 hover:text-accent transition-colors" aria-label="Sign in">
+                <LogIn className="w-5 h-5" />
+              </Link>
+            )}
             <button onClick={() => setSearchOpen(!searchOpen)} aria-label="Search" className="p-2 hover:text-accent transition-colors">
               <Search className="w-5 h-5" />
             </button>
