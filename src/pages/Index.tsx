@@ -5,7 +5,7 @@ import categoryKurtis from "@/assets/category-kurtis.jpg";
 import categoryDresses from "@/assets/category-dresses.jpg";
 import categoryTops from "@/assets/category-tops.jpg";
 import ProductCard from "@/components/ProductCard";
-import { products } from "@/data/products";
+import { useProducts } from "@/hooks/useProducts";
 
 const reviews = [
   { name: "Ayesha K.", text: "Absolutely love the quality! The fabric is so soft and the embroidery is stunning.", rating: 5 },
@@ -20,8 +20,11 @@ const categoryImages = [
 ];
 
 const Index = () => {
-  const featured = products.filter(p => p.badge === "Best Seller" || p.badge === "Featured");
-  const newArrivals = products.filter(p => p.badge === "New");
+  const { data: products = [], isLoading } = useProducts();
+  const featured = products.filter(p => p.badge === "Best Seller" || p.badge === "Featured").slice(0, 4);
+  const newArrivals = products.filter(p => p.badge === "New" || p.category === "new-arrivals").slice(0, 4);
+  const fallbackFeatured = featured.length === 0 ? products.slice(0, 4) : featured;
+  const fallbackNew = newArrivals.length === 0 ? products.slice(0, 4) : newArrivals;
 
   return (
     <div>
@@ -74,9 +77,15 @@ const Index = () => {
             View All <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {featured.map(p => <ProductCard key={p.id} product={p} />)}
-        </div>
+        {isLoading ? (
+          <p className="text-center font-body text-muted-foreground py-10">Loading products…</p>
+        ) : fallbackFeatured.length === 0 ? (
+          <p className="text-center font-body text-muted-foreground py-10">No products yet. Add some from the admin panel.</p>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {fallbackFeatured.map(p => <ProductCard key={p.id} product={p} />)}
+          </div>
+        )}
       </section>
 
       {/* New Arrivals */}
@@ -88,9 +97,15 @@ const Index = () => {
               View All <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {newArrivals.map(p => <ProductCard key={p.id} product={p} />)}
-          </div>
+          {isLoading ? (
+            <p className="text-center font-body text-muted-foreground py-10">Loading products…</p>
+          ) : fallbackNew.length === 0 ? (
+            <p className="text-center font-body text-muted-foreground py-10">No products yet.</p>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+              {fallbackNew.map(p => <ProductCard key={p.id} product={p} />)}
+            </div>
+          )}
         </div>
       </section>
 

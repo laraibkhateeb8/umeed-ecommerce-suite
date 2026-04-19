@@ -2,7 +2,8 @@ import { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { SlidersHorizontal, X } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
-import { products, categories } from "@/data/products";
+import { categories } from "@/data/products";
+import { useProducts } from "@/hooks/useProducts";
 
 const priceRanges = [
   { label: "Under PKR 3,000", min: 0, max: 3000 },
@@ -21,6 +22,7 @@ const Shop = () => {
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const { data: products = [], isLoading } = useProducts();
 
   const filtered = useMemo(() => {
     let result = products;
@@ -38,7 +40,7 @@ const Shop = () => {
       result = result.filter(p => p.colors.some(c => c.name === selectedColor));
     }
     return result;
-  }, [categoryFilter, selectedPrice, selectedSize, selectedColor]);
+  }, [products, categoryFilter, selectedPrice, selectedSize, selectedColor]);
 
   const clearFilters = () => {
     setSelectedPrice(null);
@@ -157,7 +159,9 @@ const Shop = () => {
 
         {/* Products grid */}
         <div className="flex-1">
-          {filtered.length === 0 ? (
+          {isLoading ? (
+            <p className="text-center text-muted-foreground font-body py-20">Loading products…</p>
+          ) : filtered.length === 0 ? (
             <p className="text-center text-muted-foreground font-body py-20">No products found matching your filters.</p>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
